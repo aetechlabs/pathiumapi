@@ -51,6 +51,12 @@ jobs:
       - name: Build distributions
         run: python -m build
 
+      - name: Remove legacy distributions
+        run: |
+          echo "Dist contents before cleanup:" && ls -la dist || true
+          rm -f dist/lilac-* || true
+          echo "Dist contents after cleanup:" && ls -la dist || true
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.5.0
         with:
