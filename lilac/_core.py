@@ -1,15 +1,16 @@
-import re
-__version__ = "0.1.2"
-import json
-from typing import (
-    Callable,
-    Dict,
-    Any,
-    List,
-    Optional,
-    Tuple,
-    Coroutine,
+# Deprecated: use `pathiumapi` package instead
+import warnings
+
+warnings.warn(
+    "lilac._core is deprecated — import from 'pathiumapi' instead.",
+    DeprecationWarning,
+    stacklevel=2,
 )
+
+from pathiumapi._core import *
+from pathiumapi._core import __all__ as _pathium_all
+
+__all__ = list(_pathium_all)
 
 Scope = Dict[str, Any]
 # ASGI-style callables use Coroutines (async def) so annotate with Coroutine
