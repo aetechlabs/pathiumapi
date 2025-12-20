@@ -1,4 +1,5 @@
 import re
+__version__ = "0.1.1"
 import json
 from typing import (
     Callable,
