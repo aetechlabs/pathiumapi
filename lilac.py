@@ -297,3 +297,75 @@ class HTTPError(Exception):
         self.status = status
         self.detail = detail or f"HTTP {status}"
         super().__init__(self.detail)
+
+
+# Middleware helpers
+def logging_middleware_factory(
+    logger: Optional[Callable[[str], None]] = None,
+) -> Middleware:
+    """Return a middleware that logs request method and path.
+
+    Example:
+        app.use(logging_middleware_factory(print))
+    """
+    def middleware(
+        app: Callable[[Scope, Receive, Send], Coroutine[Any, Any, None]]
+    ):
+        async def inner(scope: Scope, receive: Receive, send: Send) -> None:
+            if scope.get("type") == "http":
+                method = scope.get("method", "").upper()
+                path = scope.get("path", "")
+                msg = f"{method} {path}"
+                if logger:
+                    logger(msg)
+            await app(scope, receive, send)
+
+        return inner
+
+    return middleware
+
+
+def error_middleware(
+    app: Callable[[Scope, Receive, Send], Coroutine[Any, Any, None]]
+):
+    """Middleware that converts uncaught exceptions to JSON 500 responses."""
+
+    async def inner(scope: Scope, receive: Receive, send: Send) -> None:
+        try:
+            await app(scope, receive, send)
+        except HTTPError as he:
+            headers = [
+                (b"content-type", b"application/json; charset=utf-8"),
+            ]
+            start_msg = {
+                "type": "http.response.start",
+                "status": he.status,
+                "headers": headers,
+            }
+            await send(start_msg)
+            body = json.dumps({
+                "detail": he.detail,
+            }).encode()
+            await send({
+                "type": "http.response.body",
+                "body": body,
+            })
+        except Exception:
+            headers = [
+                (b"content-type", b"application/json; charset=utf-8"),
+            ]
+            start_msg = {
+                "type": "http.response.start",
+                "status": 500,
+                "headers": headers,
+            }
+            await send(start_msg)
+            body = json.dumps({
+                "detail": "Internal Server Error",
+            }).encode()
+            await send({
+                "type": "http.response.body",
+                "body": body,
+            })
+
+    return inner
