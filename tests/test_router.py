@@ -1,5 +1,5 @@
 import re
-from lilac import Router, Route, Response
+from pathiumapi import Router, Route, Response
 
 
 def test_route_simple_match():

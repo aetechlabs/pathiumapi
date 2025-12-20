@@ -1,4 +1,4 @@
-from lilac import Lilac, Response, logging_middleware_factory, error_middleware
+from pathiumapi import Lilac, Response, logging_middleware_factory, error_middleware
 
 app = Lilac()
 
@@ -8,7 +8,7 @@ app.use(error_middleware)
 
 @app.get("/")
 async def index(req):
-    return "Hello from Lilac"
+    return "Hello from PathiumAPI"
 
 @app.get("/items/{id:int}")
 async def get_item(req, id):

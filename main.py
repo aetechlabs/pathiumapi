@@ -1,4 +1,4 @@
-from lilac import Lilac, Request, Response, HTTPError
+from pathiumapi import Lilac, Request, Response, HTTPError
 
 
 app = Lilac()
