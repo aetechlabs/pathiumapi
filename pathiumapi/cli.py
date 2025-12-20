@@ -5,6 +5,7 @@ import textwrap
 from pathlib import Path
 
 
+
 def new_project(name: str) -> None:
     root = Path(name)
     if root.exists():
@@ -12,9 +13,9 @@ def new_project(name: str) -> None:
         return
     root.mkdir(parents=True)
     (root / "app.py").write_text(textwrap.dedent(f"""
-        from pathiumapi import Lilac, Response
+        from pathiumapi import Pathium, Response
 
-        app = Lilac()
+        app = Pathium()
 
         @app.get("/")
         async def index(req):

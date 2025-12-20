@@ -216,7 +216,7 @@ class Router:
         return None, {}
 
 
-class Lilac:
+class Pathium:
     def __init__(self):
         self.router = Router()
         self._middleware: List[Middleware] = []

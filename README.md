@@ -1,6 +1,6 @@
-# Lilac — Minimal ASGI API Framework
+# PathiumAPI — Minimal ASGI API Framework
 
-Lilac is a tiny, synchronous-friendly ASGI-style web framework inspired
+PathiumAPI is a tiny, synchronous-friendly ASGI-style web framework inspired
 by FastAPI and other micro-frameworks. It provides routing, request/
 response helpers, middleware, and simple route parameter converters.
 
@@ -23,7 +23,7 @@ routing, path converters and middleware.
 Development
 -----------
 - Run tests: `python -m pytest -q`
-- Static checks: `flake8 lilac.py` and `mypy --ignore-missing-imports lilac.py`
+- Static checks: `flake8 PathiumAPI.py` and `mypy --ignore-missing-imports PathiumAPI.py`
 
 Contributing
 ------------

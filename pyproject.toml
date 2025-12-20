@@ -12,8 +12,8 @@ authors = [ {name = "aetechlabs"} ]
 requires-python = ">=3.11"
 
 [project.urls]
-Homepage = "https://github.com/aetechlabs/lilac"
-Repository = "https://github.com/aetechlabs/lilac"
+Homepage = "https://github.com/aetechlabs/pathiumapi"
+Repository = "https://github.com/aetechlabs/pathiumapi"
 
 [tool.setuptools.packages.find]
 where = ["."]
