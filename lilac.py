@@ -1,13 +1,26 @@
 import re
 import json
-from typing import Awaitable, Callable, Dict, Any, List, Optional, Tuple
+from typing import (
+    Callable,
+    Dict,
+    Any,
+    List,
+    Optional,
+    Tuple,
+    Coroutine,
+)
 
 Scope = Dict[str, Any]
-Receive = Callable[[], Awaitable[Dict[str, Any]]]
-Send = Callable[[Dict[str, Any]], Awaitable[None]]
-Handler = Callable[..., Awaitable['Response']]
-Middleware = Callable[[Callable[[Scope, Receive, Send], Awaitable[None]]],
-                      Callable[[Scope, Receive, Send], Awaitable[None]]]
+# ASGI-style callables use Coroutines (async def) so annotate with Coroutine
+Receive = Callable[[], Coroutine[Any, Any, Dict[str, Any]]]
+Send = Callable[[Dict[str, Any]], Coroutine[Any, Any, None]]
+# A request handler returns a `Response` coroutine
+Handler = Callable[..., Coroutine[Any, Any, 'Response']]
+# Middleware wraps an ASGI app: (scope, receive, send) -> Coroutine
+Middleware = Callable[
+    [Callable[[Scope, Receive, Send], Coroutine[Any, Any, None]]],
+    Callable[[Scope, Receive, Send], Coroutine[Any, Any, None]]
+]
 
 
 class Request:
@@ -27,22 +40,28 @@ class Request:
 
     @property
     def headers(self) -> Dict[str, str]:
-        return {k.decode().lower(): v.decode() for k, v in self.scope["headers"]}
+        hdrs: Dict[str, str] = {}
+        for k, v in self.scope["headers"]:
+            hdrs[k.decode().lower()] = v.decode()
+        return hdrs
 
     @property
     def query_params(self) -> Dict[str, str]:
         raw = self.scope.get('query_string', b"") or b""
         qs = raw.decode()
-        params = {}
-        if qs:
-            for pair in qs.split("&"):
-                if not pair:
-                    continue
-                if "=" in pair:
-                    k, v = pair.split("=", 1)
-                else:
-                    k, v = pair, ""
-                params[k] = v
+        params: Dict[str, str] = {}
+        if not qs:
+            return params
+
+        for pair in qs.split("&"):
+            if not pair:
+                continue
+            if "=" in pair:
+                k, v = pair.split("=", 1)
+            else:
+                k, v = pair, ""
+            params[k] = v
+
         return params
 
     async def body(self) -> bytes:
@@ -67,22 +86,29 @@ class Request:
 
 
 class Response:
-    def __init__(self,
-                 content: bytes | str | dict | list | None = b"",
-                 status: int = 200,
-                 headers: Optional[List[Tuple[str, str]]] = None,
-                 media_type: Optional[str] = None
-                 ):
+    def __init__(
+        self,
+        content: bytes | str | dict | list | None = b"",
+        status: int = 200,
+        headers: Optional[List[Tuple[str, str]]] = None,
+        media_type: Optional[str] = None,
+    ):
         self.status = status
         self.headers = headers or []
         self.body_bytes: bytes
 
         if isinstance(content, (dict, list)):
             self.body_bytes = json.dumps(content).encode()
-            self.headers.append(("content-type", "application/json; charset=utf-8"))
+            self.headers.append((
+                "content-type",
+                "application/json; charset=utf-8",
+            ))
         elif isinstance(content, str):
             self.body_bytes = content.encode()
-            self.headers.append(("content-type", media_type or "text/plain; charset=utf-8"))
+            self.headers.append((
+                "content-type",
+                media_type or "text/plain; charset=utf-8",
+            ))
         elif isinstance(content, (bytes, bytearray)):
             self.body_bytes = bytes(content)
             if media_type:
@@ -95,7 +121,12 @@ class Response:
             raise TypeError("Unsupported content type for Response")
 
     @classmethod
-    def json(cls, data: Any, status: int = 200, headers: Optional[List[Tuple[str, str]]] = None):
+    def json(
+        cls,
+        data: Any,
+        status: int = 200,
+        headers: Optional[List[Tuple[str, str]]] = None,
+    ):
         return cls(data, status=status, headers=headers or [])
 
 
@@ -117,7 +148,7 @@ class Route:
                     raise ValueError("Unmatched '{' in route path")
                 name = path[i+1:j]
                 param_names.append(name)
-                regex_str += r"(?P<" + name + r">[^/]+)"
+                regex_str += rf"(?P<{name}>[^/]+)"
                 i = j + 1
             else:
                 c = re.escape(path[i])
@@ -143,7 +174,11 @@ class Router:
     def add(self, method: str, path: str, handler: Handler):
         self.routes.append(Route(method, path, handler))
 
-    def find(self, method: str, path: str) -> Tuple[Optional[Route], Dict[str, str]]:
+    def find(
+        self,
+        method: str,
+        path: str,
+    ) -> Tuple[Optional[Route], Dict[str, str]]:
         for r in self.routes:
             params = r.matches(method, path)
             if params is not None:
@@ -173,11 +208,17 @@ class Lilac:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         if scope["type"] != "http":
-            await send({"type": "http.response.start", "status": 404, "headers": []})
-            await send({"type": "http.response.body", "body": b"Not Found"})
+            start_msg = {
+                "type": "http.response.start",
+                "status": 404,
+                "headers": [],
+            }
+            await send(start_msg)
+            not_found = {"type": "http.response.body", "body": b"Not Found"}
+            await send(not_found)
             return
 
-        async def endpoint(scope: Scope, receive: Receive, send: Send):
+        async def endpoint(scope: Scope, receive: Receive, send: Send) -> None:
             req = Request(scope, receive)
             route, params = self.router.find(req.method, req.path)
             if route is None:
@@ -188,15 +229,35 @@ class Lilac:
                     if not isinstance(resp, Response):
                         resp = Response(resp)
                 except HTTPError as he:
-                    resp = Response.json({"detail": he.detail}, status=he.status)
+                    resp = Response.json(
+                        {"detail": he.detail},
+                        status=he.status,
+                    )
                 except Exception:
-                    resp = Response.json({"detail": "Internal Server Error"}, status=500)
+                    resp = Response.json(
+                        {"detail": "Internal Server Error"},
+                        status=500,
+                    )
 
-            headers = [(k.encode(), v.encode()) for k, v in resp.headers]
-            await send({"type": "http.response.start", "status": resp.status, "headers": headers})
-            await send({"type": "http.response.body", "body": resp.body_bytes})
+            headers: List[Tuple[bytes, bytes]] = []
+            for k, v in resp.headers:
+                headers.append((k.encode(), v.encode()))
 
-        app = endpoint
+            start_msg = {
+                "type": "http.response.start",
+                "status": resp.status,
+                "headers": headers,
+            }
+            await send(start_msg)
+            body_msg = {
+                "type": "http.response.body",
+                "body": resp.body_bytes,
+            }
+            await send(body_msg)
+
+        app: Callable[
+            [Scope, Receive, Send], Coroutine[Any, Any, None]
+        ] = endpoint
         for mw in reversed(self._middleware):
             app = mw(app)
         await app(scope, receive, send)
@@ -207,4 +268,3 @@ class HTTPError(Exception):
         self.status = status
         self.detail = detail or f"HTTP {status}"
         super().__init__(self.detail)
- 
