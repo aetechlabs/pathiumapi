@@ -134,11 +134,16 @@ class Route:
     def __init__(self, method: str, path: str, handler: Handler):
         self.method = method.upper()
         self.path = path
-        self.param_names, self.regex = self._compile(path)
+        # param_names: list of parameter names in order
+        # converters: mapping name -> callable to convert string to typed value
+        self.param_names, self.regex, self.converters = self._compile(path)
         self.handler = handler
 
-    def _compile(self, path: str) -> Tuple[List[str], re.Pattern]:
+    def _compile(
+        self, path: str
+    ) -> Tuple[List[str], re.Pattern, Dict[str, Callable[[str], Any]]]:
         param_names: List[str] = []
+        converters: Dict[str, Callable[[str], Any]] = {}
         regex_str = "^"
         i = 0
         while i < len(path):
@@ -146,9 +151,21 @@ class Route:
                 j = path.find("}", i)
                 if j == -1:
                     raise ValueError("Unmatched '{' in route path")
-                name = path[i+1:j]
+                inner = path[i+1:j]
+                # support converters: {name:type}
+                if ":" in inner:
+                    name, typ = inner.split(":", 1)
+                else:
+                    name, typ = inner, "str"
+
                 param_names.append(name)
-                regex_str += rf"(?P<{name}>[^/]+)"
+                if typ == "int":
+                    regex_str += rf"(?P<{name}>\d+)"
+                    converters[name] = int
+                else:
+                    # default and unknown types fall back to string
+                    regex_str += rf"(?P<{name}>[^/]+)"
+                    converters[name] = str
                 i = j + 1
             else:
                 c = re.escape(path[i])
@@ -156,15 +173,27 @@ class Route:
                 i += 1
 
         regex_str += "$"
-        return param_names, re.compile(regex_str)
+        return param_names, re.compile(regex_str), converters
 
-    def matches(self, method: str, path: str) -> Optional[Dict[str, str]]:
+    def matches(self, method: str, path: str) -> Optional[Dict[str, Any]]:
         if method.upper() != self.method:
             return None
         m = self.regex.match(path)
         if not m:
             return None
-        return m.groupdict()
+        raw = m.groupdict()
+        params: Dict[str, Any] = {}
+        for k, v in raw.items():
+            conv = getattr(self, "converters", {}).get(k)
+            if conv is not None:
+                try:
+                    params[k] = conv(v)
+                except Exception:
+                    # conversion failed -> no match
+                    return None
+            else:
+                params[k] = v
+        return params
 
 
 class Router:
