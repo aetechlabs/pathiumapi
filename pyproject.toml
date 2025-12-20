@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lilac"
+version = "0.1.2"
+description = "A minimal ASGI-style API framework"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [ {name = "aetechlabs"} ]
+requires-python = ">=3.11"
+
+[project.urls]
+Homepage = "https://github.com/aetechlabs/lilac"
+Repository = "https://github.com/aetechlabs/lilac"
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["tests*", "examples*", "__pycache__"]

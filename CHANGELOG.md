@@ -16,3 +16,8 @@ All notable changes to this project will be documented in this file.
 
 ## [0.1.0] - initial
 - Initial minimal framework implementation (routing, Request/Response, ASGI app).
+
+## [0.1.2] - 2025-12-20
+### Changed
+- Bumped release to 0.1.2 and prepared PyPI publishing workflow.
+
