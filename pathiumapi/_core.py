@@ -1,3 +1,15 @@
+"""Core types and helpers for PathiumAPI.
+
+This module exposes the primary API surface used by applications:
+- `Request`, `Response` — request and response helpers
+- `Route`, `Router` — routing primitives
+- `Pathium` — the minimal ASGI application object
+- `HTTPError`, `logging_middleware_factory`, `error_middleware`
+
+Docstrings in this module are intentionally brief and intended to surface
+useful information in IDE hovers and documentation viewers.
+"""
+
 import re
 __version__ = "0.1.6"
 import json
@@ -25,6 +37,19 @@ Middleware = Callable[
 
 
 class Request:
+    """Represents an incoming HTTP request.
+
+    Attributes:
+        scope: The ASGI scope dictionary for the request.
+        _receive: The ASGI receive callable.
+        _body: Cached request body bytes (filled on first read).
+
+    Typical usage in handlers:
+
+        async def handler(req: Request):
+            data = await req.json()
+            params = req.query_params
+    """
     def __init__(self, scope: Scope, receive: Receive):
         assert scope['type'] == 'http'
         self.scope = scope
@@ -87,6 +112,11 @@ class Request:
 
 
 class Response:
+    """Represents an HTTP response.
+
+    Construct with text, bytes, or a Python object (dict/list) to return JSON.
+    Use `Response.json(obj)` as a convenience helper to create a JSON response.
+    """
     def __init__(
         self,
         content: bytes | str | dict | list | None = b"",
@@ -132,6 +162,12 @@ class Response:
 
 
 class Route:
+    """A single HTTP route mapping the (method, path) to a handler.
+
+    The route compiles the path into a regular expression and supports simple
+    path converters such as `{name:int}` which will coerce the captured value
+    to `int`.
+    """
     def __init__(self, method: str, path: str, handler: Handler):
         self.method = method.upper()
         self.path = path
@@ -198,6 +234,11 @@ class Route:
 
 
 class Router:
+    """Lightweight router holding a list of `Route` objects.
+
+    Use `add()` to register routes and `find()` to lookup a matching route
+    and extracted path parameters for an incoming request.
+    """
     def __init__(self):
         self.routes: List[Route] = []
 
@@ -217,6 +258,16 @@ class Router:
 
 
 class Pathium:
+    """Minimal ASGI application with routing and middleware support.
+
+    Example:
+
+        app = Pathium()
+
+        @app.get("/items/{id:int}")
+        async def get_item(req, id: int):
+            return Response.json({"id": id})
+    """
     def __init__(self):
         self.router = Router()
         self._middleware: List[Middleware] = []
@@ -294,6 +345,12 @@ class Pathium:
 
 
 class HTTPError(Exception):
+    """Exception used to return HTTP error responses from handlers.
+
+    Raise `HTTPError(status, detail)` inside a handler. When used with the
+    provided `error_middleware`, it will be converted into a JSON response
+    with the provided status and detail message.
+    """
     def __init__(self, status: int, detail: str = ""):
         self.status = status
         self.detail = detail or f"HTTP {status}"
