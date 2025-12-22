@@ -1,3 +1,17 @@
+## 0.1.7 - 2025-12-23
+
+### Added
+- Basic OpenAPI generation and interactive documentation endpoints: `/openapi.json` and `/docs` (served via a CDN-hosted Swagger UI).
+- `scripts/release.py`: release helper that bumps `VERSION`, updates `pyproject.toml` and package `__version__`, prepends `CHANGELOG.md`, creates a git tag, and optionally pushes.
+
+### Changed
+- Release process documented in `CONTRIBUTING.md` and a release helper was added to simplify consistent version bumps and tagging.
+
+### Fixed
+- CLI robust import handling so `pathiumapi run <module>` works when the app module is outside the CWD.
+
+Additional developer-facing improvements: added short docstrings to public API symbols for better IDE hover help, updated packaging metadata, and produced distribution artifacts (`sdist` and `wheel`).
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
