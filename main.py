@@ -1,7 +1,7 @@
-from pathiumapi import Lilac, Request, Response, HTTPError
+from pathiumapi import Pathium, Request, Response, HTTPError
 
 
-app = Lilac()
+app = Pathium()
 
 
 def logger_middleware(next_app):
