@@ -427,3 +427,108 @@ def error_middleware(
             })
 
     return inner
+
+
+# --- OpenAPI / docs helpers -------------------------------------------------
+def _converter_to_openapi_type(conv: Callable[[str], Any]) -> Dict[str, str]:
+    if conv is int:
+        return {"type": "integer", "format": "int32"}
+    return {"type": "string"}
+
+
+def _route_to_openapi_entry(route: Route) -> Dict[str, Any]:
+    """Create a minimal OpenAPI path entry for a `Route`.
+
+    This intentionally produces a compact schema useful for interactive
+    documentation and quick discovery. It does not perform full request body
+    schema inference (use Pydantic integration in a follow-up feature).
+    """
+    parameters = []
+    for name, conv in getattr(route, "converters", {}).items():
+        parameters.append({
+            "name": name,
+            "in": "path",
+            "required": True,
+            "schema": _converter_to_openapi_type(conv),
+        })
+
+    summary = (route.handler.__doc__ or "").strip()
+
+    return {
+        route.method.lower(): {
+            "summary": summary,
+            "parameters": parameters,
+            "responses": {
+                "200": {"description": "Successful Response"},
+                "default": {"description": "Unexpected error"},
+            },
+        }
+    }
+
+
+def _openapi_paths(router: Router) -> Dict[str, Any]:
+    paths: Dict[str, Any] = {}
+    for r in router.routes:
+        # Pathium already uses {name} style compatible with OpenAPI
+        p = r.path
+        entry = _route_to_openapi_entry(r)
+        if p not in paths:
+            paths[p] = {}
+        paths[p].update(entry)
+    return paths
+
+
+def _swagger_ui_html(openapi_url: str) -> str:
+    # Use the unpkg CDN for a simple, zero-dependency Swagger UI
+    return f"""
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>API Docs</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4/swagger-ui.css" />
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@4/swagger-ui-bundle.js"></script>
+    <script>
+      const ui = SwaggerUIBundle({
+        url: '%s',
+        dom_id: '#swagger-ui',
+      });
+    </script>
+  </body>
+  </html>
+""" % (openapi_url)
+
+
+def add_openapi(app: Pathium, path: str = "/openapi.json", title: str = "Pathium API", version: str = __version__) -> None:
+    """Register a route that serves a minimal OpenAPI JSON spec for `app`.
+
+    Usage:
+        add_openapi(app)
+    """
+    async def _openapi_handler(req: Request):
+        spec = {
+            "openapi": "3.0.0",
+            "info": {"title": title, "version": version},
+            "paths": _openapi_paths(app.router),
+        }
+        return Response.json(spec)
+
+    app.get(path)(_openapi_handler)
+
+
+def add_docs(app: Pathium, path: str = "/docs", openapi_url: str = "/openapi.json") -> None:
+    """Register a simple Swagger UI page at `path` that points to `openapi_url`.
+
+    This is intentionally minimal: it uses the Swagger UI bundle from a CDN so
+    projects do not need to vendor static files.
+    """
+    async def _docs_handler(req: Request):
+        html = _swagger_ui_html(openapi_url)
+        return Response(html, headers=[("content-type", "text/html; charset=utf-8")])
+
+    app.get(path)(_docs_handler)
+
