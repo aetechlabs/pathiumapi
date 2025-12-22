@@ -5,13 +5,11 @@ This module exposes the primary API surface used by applications:
 - `Route`, `Router` — routing primitives
 - `Pathium` — the minimal ASGI application object
 - `HTTPError`, `logging_middleware_factory`, `error_middleware`
-
-Docstrings in this module are intentionally brief and intended to surface
-useful information in IDE hovers and documentation viewers.
+- OpenAPI generation helpers: `add_openapi()`, `add_docs()`
 """
 
 import re
-__version__ = "0.1.6"
+__version__ = "0.1.7"
 import json
 from typing import (
     Callable,
