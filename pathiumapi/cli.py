@@ -47,8 +47,17 @@ def run_app(path: str = ".") -> None:
         return
 
     # derive module path like examples.app or app
-    rel = target.relative_to(Path.cwd())
-    module = ".".join(rel.with_suffix("").parts)
+    try:
+        # Try to compute a module path relative to the current working directory
+        rel = target.relative_to(Path.cwd())
+        module = ".".join(rel.with_suffix("").parts)
+    except Exception:
+        # If the target is not inside CWD (or relative_to fails), fall back to
+        # adding the app's parent directory to sys.path and importing by name.
+        module = target.with_suffix("").name
+        import sys
+        sys.path.insert(0, str(target.parent.resolve()))
+
     print(f"Running {module}:app with uvicorn")
     uvicorn.run(f"{module}:app", host="127.0.0.1", port=8000)
 
