@@ -1,4 +1,4 @@
-# Lilac Quick Wins
+# PathiumAPI Quick Wins
 
 This file lists small, high-impact improvements to implement on the
 `planning/quick-wins` branch.
