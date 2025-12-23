@@ -452,16 +452,50 @@ def _route_to_openapi_entry(route: Route) -> Dict[str, Any]:
 
     summary = (route.handler.__doc__ or "").strip()
 
-    return {
-        route.method.lower(): {
-            "summary": summary,
-            "parameters": parameters,
-            "responses": {
-                "200": {"description": "Successful Response"},
-                "default": {"description": "Unexpected error"},
-            },
-        }
+    op: Dict[str, Any] = {
+        "summary": summary,
+        "parameters": parameters,
+        "responses": {
+            "200": {"description": "Successful Response"},
+            "default": {"description": "Unexpected error"},
+        },
     }
+
+    # Attach requestBody / response schema $ref if handler declares Pydantic models
+    try:
+        from .openapi_pydantic import is_pydantic_model
+        from .validation import response_model
+
+        handler = route.handler
+        # request body via validate_body exposes __validated_model__ on wrapper
+        validated = getattr(handler, "__validated_model__", None)
+        if validated and is_pydantic_model(validated):
+            op["requestBody"] = {
+                "content": {
+                    "application/json": {
+                        "schema": {"$ref": f"#/components/schemas/{validated.__name__}"}
+                    }
+                },
+                "required": True,
+            }
+
+        # response model via decorator or return annotation
+        resp = getattr(handler, "__response_model__", None)
+        if resp is None:
+            ann = getattr(handler, "__annotations__", {})
+            resp = ann.get("return")
+        if resp and is_pydantic_model(resp):
+            op["responses"]["200"] = {
+                "description": "Successful Response",
+                "content": {
+                    "application/json": {"schema": {"$ref": f"#/components/schemas/{resp.__name__}"}}
+                },
+            }
+    except Exception:
+        # optional Pydantic integration; ignore if missing
+        pass
+
+    return {route.method.lower(): op}
 
 
 def _openapi_paths(router: Router) -> Dict[str, Any]:

@@ -60,3 +60,16 @@ def validate_body(model: type) -> Callable:
         return wrapper
 
     return decorator
+
+
+def response_model(model: type) -> Callable:
+    """Decorator to annotate the response model for a handler.
+
+    The decorated handler will have `__response_model__` attribute set so
+    tooling (OpenAPI generation) can include the response schema.
+    """
+    def decorator(func: Callable):
+        setattr(func, "__response_model__", model)
+        return func
+
+    return decorator
