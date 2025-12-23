@@ -1,5 +1,6 @@
 dist
 pathium
 pathiumapi
+release-notes
 scripts
 venv
