@@ -17,6 +17,8 @@ from ._core import (
     error_middleware,
 )
 
+from .validation import validate_body
+
 __all__ = [
     "__version__",
     "Request",
@@ -27,4 +29,5 @@ __all__ = [
     "HTTPError",
     "logging_middleware_factory",
     "error_middleware",
+    "validate_body",
 ]
