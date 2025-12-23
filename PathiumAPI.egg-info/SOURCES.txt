@@ -13,9 +13,11 @@ pathiumapi/__init__.py
 pathiumapi/_core.py
 pathiumapi/auth.py
 pathiumapi/cli.py
+pathiumapi/middleware.py
 pathiumapi/validation.py
 scripts/release.py
 tests/test_auth.py
+tests/test_middleware.py
 tests/test_router.py
 tests/test_validation.py
 venv/Lib/site-packages/mccabe.py
