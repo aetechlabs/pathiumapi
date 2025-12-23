@@ -522,10 +522,16 @@ def add_openapi(app: Pathium, path: str = "/openapi.json", title: str = "Pathium
             # Scan route handlers for annotated Pydantic models in parameters
             for r in app.router.routes:
                 handler = r.handler
+                # Check annotated types on the handler func
                 ann = getattr(handler, "__annotations__", {})
                 for name, typ in ann.items():
                     if is_pydantic_model(typ):
                         components["schemas"][typ.__name__] = model_to_schema(typ)
+
+                # Check for validated request body exposed by `validate_body`
+                validated = getattr(handler, "__validated_model__", None)
+                if validated and is_pydantic_model(validated):
+                    components["schemas"][validated.__name__] = model_to_schema(validated)
 
             if components["schemas"]:
                 spec["components"] = components

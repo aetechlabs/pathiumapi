@@ -5,6 +5,7 @@ into a Pydantic model instance. Validation is lazy and works with both Pydantic
 v1 and v2 by detecting the available API.
 """
 from typing import Any, Callable
+from functools import wraps
 
 try:
     from pydantic import BaseModel  # type: ignore
@@ -47,11 +48,15 @@ def validate_body(model: type) -> Callable:
 
     """
     def decorator(func: Callable):
+        @wraps(func)
         async def wrapper(req, *args, **kwargs):
             data = await req.json()
             obj = validate_data(model, data or {})
             return await func(req, obj, *args, **kwargs)
 
+        # expose the validated model on the wrapper so tooling (e.g., OpenAPI)
+        # can detect the request body model for schema generation
+        setattr(wrapper, "__validated_model__", model)
         return wrapper
 
     return decorator
