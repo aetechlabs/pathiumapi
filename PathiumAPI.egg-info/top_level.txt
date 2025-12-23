@@ -1,4 +1,4 @@
 dist
-lilac
+pathium
 pathiumapi
 venv

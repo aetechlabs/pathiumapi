@@ -6,9 +6,9 @@ PathiumAPI.egg-info/SOURCES.txt
 PathiumAPI.egg-info/dependency_links.txt
 PathiumAPI.egg-info/entry_points.txt
 PathiumAPI.egg-info/top_level.txt
-lilac/__init__.py
-lilac/_core.py
-lilac/cli.py
+pathium/__init__.py
+pathium/_core.py
+pathium/cli.py
 pathiumapi/__init__.py
 pathiumapi/_core.py
 pathiumapi/cli.py
