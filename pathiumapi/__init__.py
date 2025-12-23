@@ -18,6 +18,7 @@ from ._core import (
 )
 
 from .validation import validate_body
+from .auth import jwt_middleware_factory, create_token
 
 __all__ = [
     "__version__",
@@ -30,4 +31,6 @@ __all__ = [
     "logging_middleware_factory",
     "error_middleware",
     "validate_body",
+    "jwt_middleware_factory",
+    "create_token",
 ]
