@@ -9,7 +9,7 @@ This module exposes the primary API surface used by applications:
 """
 
 import re
-__version__ = "0.1.8"
+__version__ = "0.1.9"
 import json
 from typing import (
     Callable,
