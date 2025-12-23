@@ -1,5 +1,9 @@
 ## 0.1.10 - 2025-12-23
 
+- Release notes go here.
+
+## 0.1.10 - 2025-12-23
+
 ### Added
 - Common middleware: CORS, security headers, and a simple in-memory rate limiter (`pathiumapi/middleware.py`).
 
