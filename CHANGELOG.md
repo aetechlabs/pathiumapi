@@ -1,7 +1,3 @@
-## 0.1.13 - 2025-12-23
-
-- Release notes go here.
-
 ## 0.1.12 - 2025-12-23
 
 - Release notes go here.

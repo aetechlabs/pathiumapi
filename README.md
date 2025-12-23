@@ -1,6 +1,6 @@
 # PathiumAPI — Minimal ASGI API Framework
 
-**Version 0.1.11** | [GitHub](https://github.com/aetechlabs/pathiumapi) | [PyPI](https://pypi.org/project/PathiumAPI/)
+**Version 0.1.12** | [GitHub](https://github.com/aetechlabs/pathiumapi) | [PyPI](https://pypi.org/project/PathiumAPI/)
 
 PathiumAPI is a small, synchronous-friendly ASGI-style web framework inspired by
 FastAPI and other micro-frameworks. It focuses on a compact, explicit API for
