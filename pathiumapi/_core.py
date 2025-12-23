@@ -513,6 +513,26 @@ def add_openapi(app: Pathium, path: str = "/openapi.json", title: str = "Pathium
             "info": {"title": title, "version": version},
             "paths": _openapi_paths(app.router),
         }
+
+        # Try to include Pydantic-generated component schemas when available
+        try:
+            from .openapi_pydantic import model_to_schema, is_pydantic_model
+
+            components: Dict[str, Any] = {"schemas": {}}
+            # Scan route handlers for annotated Pydantic models in parameters
+            for r in app.router.routes:
+                handler = r.handler
+                ann = getattr(handler, "__annotations__", {})
+                for name, typ in ann.items():
+                    if is_pydantic_model(typ):
+                        components["schemas"][typ.__name__] = model_to_schema(typ)
+
+            if components["schemas"]:
+                spec["components"] = components
+        except Exception:
+            # Pydantic may be missing; ignore and return basic spec
+            pass
+
         return Response.json(spec)
 
     app.get(path)(_openapi_handler)
