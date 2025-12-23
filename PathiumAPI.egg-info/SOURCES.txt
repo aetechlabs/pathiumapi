@@ -12,7 +12,10 @@ pathium/cli.py
 pathiumapi/__init__.py
 pathiumapi/_core.py
 pathiumapi/cli.py
+pathiumapi/validation.py
+scripts/release.py
 tests/test_router.py
+tests/test_validation.py
 venv/Lib/site-packages/mccabe.py
 venv/Lib/site-packages/mypy_extensions.py
 venv/Lib/site-packages/py.py

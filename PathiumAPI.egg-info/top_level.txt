@@ -1,4 +1,5 @@
 dist
 pathium
 pathiumapi
+scripts
 venv
