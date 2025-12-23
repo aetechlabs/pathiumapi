@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: PathiumAPI
-Version: 0.1.10
+Version: 0.1.11
 Summary: A minimal ASGI-style API framework
 Author: aetechlabs
 License: MIT
