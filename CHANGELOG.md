@@ -1,6 +1,15 @@
 ## 0.1.11 - 2025-12-23
 
-- Release notes go here.
+### Added
+- Auto-generation of OpenAPI query parameter schemas from Pydantic models (`pathiumapi/openapi_pydantic.py`).
+- `validate_query` decorator and OpenAPI integration (`pathiumapi/validation.py`, `pathiumapi/_core.py`).
+- Tests and an example demonstrating query-model docs (`tests/test_openapi_query.py`, `examples/query_app.py`).
+
+### Changed
+- Normalized Pydantic schema generation to always include `properties` and `required` keys for OpenAPI consumption.
+
+Developer notes:
+- Visit `/openapi.json` or `/docs` after calling `add_openapi(app)` and `add_docs(app)` to view generated documentation.
 
 ## 0.1.10 - 2025-12-23
 
