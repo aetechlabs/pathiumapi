@@ -1,6 +1,26 @@
 ## 0.1.12 - 2025-12-23
 
-- Release notes go here.
+### Added
+- Improved README quickstart and CLI documentation to help new users get
+	started quickly from PyPI.
+- OpenAPI/Pydantic integration: automatic component schema generation for
+	request bodies and query parameter models (see `pathiumapi/openapi_pydantic.py`).
+- `@validate_query` decorator and OpenAPI integration (`pathiumapi/validation.py`).
+- Examples demonstrating query-model docs and validation: `examples/query_app.py`.
+
+### Changed
+- Normalized Pydantic schema generation to always include `properties` and
+	`required` keys for wider OpenAPI compatibility.
+- Improved examples and tests; updated CI build steps to reduce stale-artifact
+	upload failures.
+
+### Fixed
+- Minor packaging metadata and documentation inconsistencies discovered during
+	release preparation.
+
+Developer notes:
+- Call `add_openapi(app)` and `add_docs(app)` in your app to expose `/openapi.json`
+	and the interactive Swagger UI at `/docs`.
 
 ## 0.1.11 - 2025-12-23
 
