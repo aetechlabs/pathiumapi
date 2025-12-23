@@ -1,6 +1,17 @@
 ## 0.1.8 - 2025-12-23
 
-- Release notes go here.
+### Added
+- Pydantic integration helpers for easy request body validation via `@validate_body(Model)`.
+
+### Changed
+- Improved release process documentation to discourage using `--force` with the release helper; prefer committing or cleaning the working tree before releasing.
+
+### Fixed
+- Minor packaging metadata and egg-info consistency fixes applied during release preparation.
+
+Developer notes:
+- Added tests for Pydantic validation and included `pydantic>=1.10` as a development dependency.
+- Created `feature/pydantic-validation` branch and merged into `main` with validation helpers and tests.
 
 ## 0.1.7 - 2025-12-23
 

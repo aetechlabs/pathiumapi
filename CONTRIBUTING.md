@@ -33,7 +33,15 @@ python scripts/release.py --bump minor --push
 
 The script updates `VERSION`, `pyproject.toml`, and `pathiumapi/_core.py`,
 prepends a changelog entry to `CHANGELOG.md`, creates a commit and an annotated
-tag. Use `--force` to allow running with uncommitted changes.
+tag. **Do not use `--force` unless absolutely necessary.** Prefer the safe
+workflow:
+
+- Commit or stash any local changes before running the release script.
+- Re-run the release script without `--force` so changes are deterministic and
+	reproducible in CI.
+
+If you must use `--force` (e.g., emergency correction), add a short note to
+the PR or release describing why it was required.
 
 If you prefer manual steps, follow the previous process: bump `VERSION`,
 update `pyproject.toml` and `pathiumapi/_core.py`, add a `CHANGELOG.md` entry,
