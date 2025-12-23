@@ -463,8 +463,7 @@ def _route_to_openapi_entry(route: Route) -> Dict[str, Any]:
 
     # Attach requestBody / response schema $ref if handler declares Pydantic models
     try:
-        from .openapi_pydantic import is_pydantic_model
-        from .validation import response_model
+        from .openapi_pydantic import is_pydantic_model, model_to_schema
 
         handler = route.handler
         # request body via validate_body exposes __validated_model__ on wrapper
@@ -478,6 +477,21 @@ def _route_to_openapi_entry(route: Route) -> Dict[str, Any]:
                 },
                 "required": True,
             }
+
+        # query params via validate_query exposes __validated_query_model__
+        qmodel = getattr(handler, "__validated_query_model__", None)
+        if qmodel and is_pydantic_model(qmodel):
+            schema = model_to_schema(qmodel)
+            props = schema.get("properties", {})
+            required = set(schema.get("required", []))
+            for pname, pschema in props.items():
+                param = {
+                    "name": pname,
+                    "in": "query",
+                    "required": pname in required,
+                    "schema": pschema,
+                }
+                op["parameters"].append(param)
 
         # response model via decorator or return annotation
         resp = getattr(handler, "__response_model__", None)
@@ -566,6 +580,10 @@ def add_openapi(app: Pathium, path: str = "/openapi.json", title: str = "Pathium
                 validated = getattr(handler, "__validated_model__", None)
                 if validated and is_pydantic_model(validated):
                     components["schemas"][validated.__name__] = model_to_schema(validated)
+                # Check for validated query model exposed by `validate_query`
+                qvalidated = getattr(handler, "__validated_query_model__", None)
+                if qvalidated and is_pydantic_model(qvalidated):
+                    components["schemas"][qvalidated.__name__] = model_to_schema(qvalidated)
 
             if components["schemas"]:
                 spec["components"] = components

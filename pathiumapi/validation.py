@@ -73,3 +73,24 @@ def response_model(model: type) -> Callable:
         return func
 
     return decorator
+
+
+def validate_query(model: type) -> Callable:
+    """Decorator to validate query parameters into a Pydantic model instance.
+
+    The decorated handler will receive the validated model instance as a
+    positional argument after `req`. The wrapper will also expose
+    `__validated_query_model__` for tooling.
+    """
+    def decorator(func: Callable):
+        @wraps(func)
+        async def wrapper(req, *args, **kwargs):
+            # query_params is a dict[str,str]
+            data = req.query_params
+            obj = validate_data(model, data or {})
+            return await func(req, obj, *args, **kwargs)
+
+        setattr(wrapper, "__validated_query_model__", model)
+        return wrapper
+
+    return decorator

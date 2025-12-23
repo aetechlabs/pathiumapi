@@ -28,10 +28,16 @@ def model_to_schema(model: Type[Any]) -> Dict[str, Any]:
         schema = model.model_json_schema()
         # ensure top-level $schema not included in components
         schema.pop("$schema", None)
+        # normalize keys
+        schema.setdefault("properties", {})
+        schema.setdefault("required", [])
         return schema
 
     # Pydantic v1
     if hasattr(model, "schema"):
-        return model.schema()
+        schema = model.schema()
+        schema.setdefault("properties", {})
+        schema.setdefault("required", [])
+        return schema
 
     raise RuntimeError("Unsupported Pydantic model type")
