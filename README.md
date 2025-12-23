@@ -169,8 +169,8 @@ PR against `main` when ready and include tests for new functionality.
 What's New
 ----------
 
-### v0.1.12 (Latest)
-- Improved onboarding and README quickstart for PyPI visitors
+-### v0.1.12 (Latest)
+- Improved onboarding and README quickstart
 - OpenAPI + Pydantic improvements: component schemas, `@validate_query`, and
     more robust schema normalization for OpenAPI consumption
 - New examples and tests demonstrating query-model docs and validation
