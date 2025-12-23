@@ -1,6 +1,20 @@
 ## 0.1.9 - 2025-12-23
 
-- Release notes go here.
+### Added
+- JWT authentication middleware and helpers: `jwt_middleware_factory` and `create_token`.
+- Example auth app at `examples/auth_app.py` demonstrating login and a protected route.
+
+### Changed
+- CI: clean `dist/` before building to avoid stale artifacts during uploads.
+- CI: enable `skip_existing` on PyPI uploads to tolerate previously-uploaded identical files.
+
+### Fixed
+- Packaging and release process improvements; updated docs and release helper.
+
+Developer notes:
+- Created GitHub Releases for `v0.1.8` and `v0.1.9` and added release note files under `release-notes/`.
+- Added `PyJWT` as a development dependency for auth tests/examples.
+
 
 ## 0.1.8 - 2025-12-23
 
