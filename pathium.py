@@ -1,5 +1,5 @@
 import re
-__version__ = "0.1.10"
+__version__ = "0.1.11"
 import json
 from typing import (
     Callable,

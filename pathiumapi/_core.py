@@ -9,7 +9,7 @@ This module exposes the primary API surface used by applications:
 """
 
 import re
-__version__ = "0.1.10"
+__version__ = "0.1.11"
 import json
 from typing import (
     Callable,
@@ -452,16 +452,64 @@ def _route_to_openapi_entry(route: Route) -> Dict[str, Any]:
 
     summary = (route.handler.__doc__ or "").strip()
 
-    return {
-        route.method.lower(): {
-            "summary": summary,
-            "parameters": parameters,
-            "responses": {
-                "200": {"description": "Successful Response"},
-                "default": {"description": "Unexpected error"},
-            },
-        }
+    op: Dict[str, Any] = {
+        "summary": summary,
+        "parameters": parameters,
+        "responses": {
+            "200": {"description": "Successful Response"},
+            "default": {"description": "Unexpected error"},
+        },
     }
+
+    # Attach requestBody / response schema $ref if handler declares Pydantic models
+    try:
+        from .openapi_pydantic import is_pydantic_model, model_to_schema
+
+        handler = route.handler
+        # request body via validate_body exposes __validated_model__ on wrapper
+        validated = getattr(handler, "__validated_model__", None)
+        if validated and is_pydantic_model(validated):
+            op["requestBody"] = {
+                "content": {
+                    "application/json": {
+                        "schema": {"$ref": f"#/components/schemas/{validated.__name__}"}
+                    }
+                },
+                "required": True,
+            }
+
+        # query params via validate_query exposes __validated_query_model__
+        qmodel = getattr(handler, "__validated_query_model__", None)
+        if qmodel and is_pydantic_model(qmodel):
+            schema = model_to_schema(qmodel)
+            props = schema.get("properties", {})
+            required = set(schema.get("required", []))
+            for pname, pschema in props.items():
+                param = {
+                    "name": pname,
+                    "in": "query",
+                    "required": pname in required,
+                    "schema": pschema,
+                }
+                op["parameters"].append(param)
+
+        # response model via decorator or return annotation
+        resp = getattr(handler, "__response_model__", None)
+        if resp is None:
+            ann = getattr(handler, "__annotations__", {})
+            resp = ann.get("return")
+        if resp and is_pydantic_model(resp):
+            op["responses"]["200"] = {
+                "description": "Successful Response",
+                "content": {
+                    "application/json": {"schema": {"$ref": f"#/components/schemas/{resp.__name__}"}}
+                },
+            }
+    except Exception:
+        # optional Pydantic integration; ignore if missing
+        pass
+
+    return {route.method.lower(): op}
 
 
 def _openapi_paths(router: Router) -> Dict[str, Any]:
@@ -513,6 +561,36 @@ def add_openapi(app: Pathium, path: str = "/openapi.json", title: str = "Pathium
             "info": {"title": title, "version": version},
             "paths": _openapi_paths(app.router),
         }
+
+        # Try to include Pydantic-generated component schemas when available
+        try:
+            from .openapi_pydantic import model_to_schema, is_pydantic_model
+
+            components: Dict[str, Any] = {"schemas": {}}
+            # Scan route handlers for annotated Pydantic models in parameters
+            for r in app.router.routes:
+                handler = r.handler
+                # Check annotated types on the handler func
+                ann = getattr(handler, "__annotations__", {})
+                for name, typ in ann.items():
+                    if is_pydantic_model(typ):
+                        components["schemas"][typ.__name__] = model_to_schema(typ)
+
+                # Check for validated request body exposed by `validate_body`
+                validated = getattr(handler, "__validated_model__", None)
+                if validated and is_pydantic_model(validated):
+                    components["schemas"][validated.__name__] = model_to_schema(validated)
+                # Check for validated query model exposed by `validate_query`
+                qvalidated = getattr(handler, "__validated_query_model__", None)
+                if qvalidated and is_pydantic_model(qvalidated):
+                    components["schemas"][qvalidated.__name__] = model_to_schema(qvalidated)
+
+            if components["schemas"]:
+                spec["components"] = components
+        except Exception:
+            # Pydantic may be missing; ignore and return basic spec
+            pass
+
         return Response.json(spec)
 
     app.get(path)(_openapi_handler)
