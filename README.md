@@ -18,6 +18,10 @@ Key Features
 - **Authentication**: JWT middleware and helpers for protected routes
 - **Built-in Middleware**: CORS, security headers, rate limiting, logging, and error handling
 - **CLI Tools**: Scaffold and run apps with `pathiumapi new` and `pathiumapi run`
+ - **CLI Tools & Runner**: Scaffold and run apps with `pathiumapi new` and
+     `pathiumapi run` — a built-in, purpose-built runner so you don't need a
+     separate `uvicorn` command to run development servers. The CLI also
+     provides a small scaffolding helper to create a new `pathiumapi` project.
 
 Installation
 ------------
@@ -56,14 +60,49 @@ async def create_user(req):
     return Response.json({"created": user_data.dict()}, status=201)
 ```
 
-Run with `uvicorn`:
+Run and manage your app with the built-in `pathiumapi` CLI
 
 ```bash
-pip install uvicorn
-uvicorn app:app --reload
+# install the package (if not already installed)
+pip install PathiumAPI
 ```
 
-Visit `http://localhost:8000/docs` for interactive API documentation!
+Quick CLI workflow
+------------------
+
+- Scaffold a new app:
+
+```bash
+pathiumapi new myapp
+cd myapp
+```
+
+- Run the app (looks for `app.py` with an `app` object):
+
+```bash
+pathiumapi run
+# or run a folder containing app.py from anywhere
+pathiumapi run path/to/myapp
+```
+
+- Generate scaffolding (route stub example):
+
+```bash
+# creates routes/users.py and attempts to auto-register in app.py
+pathiumapi generate route users --path /users --method get
+```
+
+Notes
+-----
+- `pathiumapi run` will use `uvicorn` under-the-hood if it is installed; if
+    `uvicorn` is not available the CLI will ask you to `pip install uvicorn`.
+- The CLI's `run` command expects a folder with an `app.py` file. It does not
+    take a module argument; pass the folder path instead.
+- If you want live reload you can either install `uvicorn` and run it directly
+    with `uvicorn app:app --reload`, or you can add a `--reload` forwarding flag to
+    `pathiumapi run` like so: `pathiumapi run myapp --reload`.
+
+Visit `http://localhost:8000/docs` (the built-in Swagger UI) for interactive API documentation!
 
 Examples and Documentation
 --------------------------
