@@ -526,7 +526,7 @@ def _openapi_paths(router: Router) -> Dict[str, Any]:
 
 def _swagger_ui_html(openapi_url: str) -> str:
     # Use the unpkg CDN for a simple, zero-dependency Swagger UI
-    return f"""
+    return """
 <!doctype html>
 <html lang="en">
   <head>
@@ -534,8 +534,19 @@ def _swagger_ui_html(openapi_url: str) -> str:
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>API Docs</title>
     <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4/swagger-ui.css" />
+    <style>
+      .greeting {
+        text-align: center;
+        padding: 20px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #3b4151;
+        font-family: sans-serif;
+      }
+    </style>
   </head>
   <body>
+    <div class="greeting">Good day</div>
     <div id="swagger-ui"></div>
     <script src="https://unpkg.com/swagger-ui-dist@4/swagger-ui-bundle.js"></script>
     <script>
