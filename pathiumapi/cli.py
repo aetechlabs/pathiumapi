@@ -38,21 +38,19 @@ def run_app(path: str = ".") -> None:
     if target is None:
         print("No app.py found in the current folder or examples/. Create one with `pathiumapi new <name>`." )
         return
-
     # Attempt to run with uvicorn if available
-    try:
-        import uvicorn
-    except Exception:
-        print("Install uvicorn to run the app: pip install uvicorn")
-        return
+    else:
+        tpl = textwrap.dedent(f"""
+            from pathiumapi import Response
 
-    # derive module path like examples.app or app
-    try:
-        # Try to compute a module path relative to the current working directory
-        rel = target.relative_to(Path.cwd())
-        module = ".".join(rel.with_suffix("").parts)
-    except Exception:
-        # If the target is not inside CWD (or relative_to fails), fall back to
+            def register(app):
+                @app.{method}("{route_path}")
+                async def {name}(req):
+                    return Response.json({{"message": "Hello from {name}", "path": "{route_path}"}})
+
+        """)
+        target.write_text(tpl)
+        print(f"Created route stub: {target}")
         # adding the app's parent directory to sys.path and importing by name.
         module = target.with_suffix("").name
         import sys
@@ -72,19 +70,80 @@ def generate_route(name: str, route_path: str, method: str = "get", app_file: st
     routes_dir.mkdir(exist_ok=True)
     target = routes_dir / f"{name}.py"
     if target.exists():
-        print(f"Route file {target} already exists")
-        return
+        # If the file exists, try to add another method handler into the
+        # existing `def register(app):` block rather than failing outright.
+        content = target.read_text()
+        # If the exact decorator (method+path) already exists, bail out.
+        if f'@app.{method}("{route_path}")' in content:
+            print(f"Route file {target} already contains this route")
+            return
 
-    tpl = textwrap.dedent(f"""
-        from pathiumapi import Response
+        # Build a handler name that includes the method to avoid name collisions
+        handler_name = f"{name}_{method}"
+        if f"def {handler_name}(req)" in content or f"async def {handler_name}(req)" in content:
+            print(f"Route file {target} already contains a handler named {handler_name}")
+            return
 
-        def register(app):
-            @app.{method}("{route_path}")
-            async def {name}(req):
-                return Response.json({{"message": "Hello from {name}", "path": "{route_path}"}})
+        new_handler = textwrap.dedent(f'''
+            \n
+                @app.{method}("{route_path}")
+                async def {handler_name}(req):
+                    return Response.json({{"message": "Hello from {name}", "path": "{route_path}", "method": "{method.upper()}"}})
 
-    """
-    )
+        ''')
+
+        # Insert the new handler inside the existing `def register(app):` block if present.
+        lines = content.splitlines(keepends=True)
+        reg_idx = None
+        for i, line in enumerate(lines):
+            if line.strip().startswith("def register(app):"):
+                reg_idx = i
+                break
+
+        if reg_idx is None:
+            # No register function found — append a new register function at EOF
+            tpl = textwrap.dedent(f"""
+                \n
+                def register(app):
+                    @app.{method}("{route_path}")
+                    async def {handler_name}(req):
+                        return Response.json({{"message": "Hello from {name}", "path": "{route_path}", "method": "{method.upper()}"}})
+
+            """)
+            with target.open("a", encoding="utf-8") as fh:
+                fh.write(tpl)
+            print(f"Appended handler for {method.upper()} to {target}")
+            # Try to auto-register in app_file later (existing logic handles app_file)
+        else:
+            # Find end of the register block: first subsequent line with no leading whitespace
+            end_idx = len(lines)
+            for j in range(reg_idx + 1, len(lines)):
+                l = lines[j]
+                if l.strip() == "":
+                    continue
+                # If this line has no indentation (starts at column 0), it's outside the block
+                if l[:len(l) - len(l.lstrip())] == "":
+                    end_idx = j
+                    break
+
+            # Insert new handler just before end_idx, ensure proper indentation
+            lines.insert(end_idx, new_handler)
+            target.write_text("".join(lines))
+            print(f"Inserted handler for {method.upper()} into {target}")
+        # Don't create a new file — we've updated the existing file instead.
+        # Attempt to append registration to app_file below if needed.
+    else:
+
+        tpl = textwrap.dedent(f"""
+            from pathiumapi import Response
+
+            def register(app):
+                @app.{method}("{route_path}")
+                async def {name}(req):
+                    return Response.json({{"message": "Hello from {name}", "path": "{route_path}"}})
+
+        """
+        )
     target.write_text(tpl)
     print(f"Created route stub: {target}")
 

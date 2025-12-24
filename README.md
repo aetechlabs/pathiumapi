@@ -1,6 +1,6 @@
 # PathiumAPI — Minimal ASGI API Framework
 
-**Version 0.1.12** | [GitHub](https://github.com/aetechlabs/pathiumapi) | [PyPI](https://pypi.org/project/PathiumAPI/)
+**Version 0.2.0** | [GitHub](https://github.com/aetechlabs/pathiumapi) | [PyPI](https://pypi.org/project/PathiumAPI/)
 
 PathiumAPI is a small, synchronous-friendly ASGI-style web framework inspired by
 FastAPI and other micro-frameworks. It focuses on a compact, explicit API for
@@ -169,7 +169,7 @@ PR against `main` when ready and include tests for new functionality.
 What's New
 ----------
 
-### v0.1.12 (Latest)
+### v0.2.0 (Latest)
 - Improved onboarding and README quickstart
 - OpenAPI + Pydantic improvements: component schemas, `@validate_query`, and
     more robust schema normalization for OpenAPI consumption
