@@ -1,6 +1,22 @@
 ## 0.2.0 - 2025-12-24
 
-- Release notes go here.
+- CLI: `pathiumapi generate route` can now add multiple HTTP method handlers
+	into an existing `routes/<name>.py` module (e.g. add `POST` after a file
+	was generated for `GET`). The generator inserts new handlers into the
+	module's `register(app)` function when present and avoids duplicate
+	decorators or handler names.
+
+- CLI: Fixed an edge-case in `pathiumapi run` that could corrupt the
+	runner logic when edits were made to the CLI implementation; more robust
+	module discovery and import behavior.
+
+- Core: Make JWT helper imports optional so tools/CLI don't fail to run
+	inside virtual environments that don't have `PyJWT` installed. Calling
+	`jwt_middleware_factory` or `create_token` without `PyJWT` will raise a
+	clear, actionable RuntimeError explaining how to install the dependency.
+
+- Internal: various small fixes and test improvements in preparation for
+	the 0.2.0 release.
 
 ## 0.1.12 - 2025-12-23
 

@@ -102,6 +102,11 @@ The package provides a small CLI entrypoint `pathiumapi` with commands:
 - `pathiumapi new <name>` — scaffold a new app
 - `pathiumapi run` — try to run an `app.py` with `uvicorn` if installed
 
+- `pathiumapi generate route <name> --path /foo --method get|post|put|delete`
+    — scaffold a `routes/<name>.py` route module. If the module already exists
+    the generator will append a new handler for the specified HTTP method into
+    the module's `register(app)` function (avoids creating duplicate decorators).
+
 Example:
 
 ```bash
